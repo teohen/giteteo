@@ -28,6 +28,8 @@ fn readFromStdIn() void {
 }
 
 fn save(filename: []u8) !void {
+    //TODO: Its loading a file and saving the gtt format.
+    //TODO: create the diff algorithm
     const allocator = std.heap.page_allocator;
 
     const file_data = try file.read(filename);
