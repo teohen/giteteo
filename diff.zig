@@ -35,47 +35,65 @@ fn lev(a: []const u8, b: []const u8, sa: usize, sb: usize, cache_ptr: *[][]usize
         return cache[sa][sb];
     }
 
-    //cache[sa][sb] = 1 + @min(lev(a, b, sa - 1, sb, cache_ptr, "REM"), @min(lev(a, b, sa, sb - 1, cache_ptr, "ADD"), lev(a, b, sa - 1, sb - 1, cache_ptr, "REP")));
+    cache[sa][sb] = 1 + @min(lev(a, b, sa - 1, sb, cache_ptr, "REM"), @min(lev(a, b, sa, sb - 1, cache_ptr, "ADD"), lev(a, b, sa - 1, sb - 1, cache_ptr, "REP")));
 
-    //return cache[sa][sb];
-
-    const rem = lev(a, b, sa - 1, sb, cache_ptr, "REM"); // REMOVE
-    const add = lev(a, b, sa, sb - 1, cache_ptr, "ADD"); // ADD
-    const rep = lev(a, b, sa - 1, sb - 1, cache_ptr, "REP"); // REPLACE
-    if (rem <= add and rem <= rep) {
-        std.debug.print("REM CHOOSED{}\n", .{rem});
-        cache[sa][sb] = 1 + rem;
-    } else if (add < rem and add < rep) {
-        std.debug.print("ADD CHOOSED {}\n", .{add});
-        cache[sa][sb] = 1 + add;
-    } else if (rep < rem and rep < add) {
-        std.debug.print("REP CHOOSED {}\n", .{rep});
-        cache[sa][sb] = 1 + rep;
-    }
-
-    std.debug.print("-----------------------\n", .{});
     return cache[sa][sb];
 }
 
+fn lev2(a: []const u8, b: []const u8, cache_ptr: *[][]usize) usize {
+    const cache = cache_ptr.*;
+
+    var n1: usize = undefined;
+    var n2: usize = undefined;
+
+    for (0..b.len + 1) |i| {
+        n2 = i;
+        n1 = 0;
+        cache[n1][n2] = n2;
+    }
+
+    for (0..a.len + 1) |i| {
+        n1 = i;
+        n2 = 0;
+        cache[i][n2] = n1;
+    }
+
+    for (1..a.len + 1) |i| {
+        n1 = i;
+        for (1..b.len + 1) |j| {
+            n2 = j;
+            if (a[n1 - 1] == b[n2 - 1]) {
+                cache[n1][n2] = cache[n1 - 1][n2 - 1];
+                continue;
+            }
+            cache[n1][n2] = 1 + @min(cache[n1 - 1][n2], @min(cache[n1][n2 - 1], cache[n1 - 1][n2 - 1]));
+        }
+    }
+
+    return cache[n1][n2];
+}
 pub fn diff() void {
-    //const a = "add";
-    //const b = "daddy";
+    const a = "add";
+    const b = "daddy";
 
-    const a = "adddfjksdfkdgjks";
-    const b = "addf9sdfjksdfjkljsdf";
+    //const a = "adddfjksdfkdgjks";
+    //const b = "addf9sdfjksdfjkljsdf";
 
-    var data: [a.len][b.len]usize = undefined;
+    const a_len = a.len + 1;
+    const b_len = b.len + 1;
 
-    for (0..a.len) |i| {
-        for (0..b.len) |j| {
+    var data: [a_len][b_len]usize = undefined;
+
+    for (0..a_len) |i| {
+        for (0..b_len) |j| {
             data[i][j] = NOT_VALUE;
         }
     }
 
     var cache: [][]usize = undefined;
-    var buffer: [a.len][]usize = undefined;
+    var buffer: [a_len][]usize = undefined;
 
-    for (0..a.len) |i| {
+    for (0..a_len) |i| {
         // slicing the columns inside the array
         const r_ptr = &data[i];
         buffer[i] = r_ptr;
@@ -85,7 +103,7 @@ pub fn diff() void {
 
     std.debug.print("A: {s} - B: {s}\n\n", .{ a, b });
 
-    const res = lev(a, b, a.len - 1, b.len - 1, &cache, "INI");
+    const res = lev2(a, b, &cache);
 
     std.debug.print("RES {}\n", .{res});
 }
