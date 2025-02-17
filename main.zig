@@ -1,6 +1,7 @@
 const std = @import("std");
 const Sha2 = std.crypto.hash.sha2.Sha256;
 const file = @import("file.zig");
+const diff = @import("diff.zig");
 
 fn calls(file_data: []u8) [64]u8 {
     var out: [32]u8 = undefined;
@@ -41,19 +42,20 @@ fn save(filename: []u8) !void {
 }
 
 pub fn main() !void {
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    defer arena.deinit();
+    diff.diff();
+    //var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    //defer arena.deinit();
 
-    const allocator = arena.allocator();
+    //const allocator = arena.allocator();
 
-    const args = try std.process.argsAlloc(allocator);
-    defer std.process.argsFree(allocator, args);
+    //const args = try std.process.argsAlloc(allocator);
+    //defer std.process.argsFree(allocator, args);
 
-    for (args, 0..) |arg, i| {
-        if (std.mem.eql(u8, arg, "-s")) {
-            const filename = args[i + 1];
-            try save(filename);
-        }
-        std.debug.print("Argument {}: {s}\n", .{ i, arg });
-    }
+    //for (args, 0..) |arg, i| {
+    //if (std.mem.eql(u8, arg, "-s")) {
+    //const filename = args[i + 1];
+    //try save(filename);
+    //}
+    //std.debug.print("Argument {}: {s}\n", .{ i, arg });
+    //}
 }
