@@ -1,60 +1,33 @@
 const std = @import("std");
 
 const NOT_VALUE = 1111110;
+var NOT_VALUE_ACTION: u8 = '-';
+const IGNORE = '_';
+const ADD = '+';
+const REMOVE = '-';
+const REPLACE = 'r';
 
-fn lev(a: []const u8, b: []const u8, sa: usize, sb: usize, cache_ptr: *[][]usize, op: *const [3]u8) usize {
-    const cache = cache_ptr.*;
-
-    std.debug.print("OP: {s} a: {s}({}) - b:{s}({}) - cache: {}\n", .{ op, a[0 .. sa + 1], sa, b[0 .. sb + 1], sb, cache[sa][sb] });
-
-    if (cache[sa][sb] != NOT_VALUE) {
-        std.debug.print("OUT\n", .{});
-        return cache[sa][sb];
-    }
-
-    if (sa == 0) {
-        cache[sa][sb] = sb;
-        std.debug.print("OUT\n", .{});
-        return cache[sa][sb];
-    }
-
-    if (sb == 0) {
-        cache[sa][sb] = sa;
-        std.debug.print("OUT\n", .{});
-        return cache[sa][sb];
-    }
-
-    const a_last_char = a[sa];
-    const b_last_char = b[sb];
-
-    std.debug.print("last_a {c}\nlast_b: {c}\n", .{ a_last_char, b_last_char });
-
-    if (a_last_char == b_last_char) {
-        cache[sa][sb] = lev(a, b, sa - 1, sb - 1, cache_ptr, "IG"); // IGNORE
-        std.debug.print("OUT\n", .{});
-        return cache[sa][sb];
-    }
-
-    cache[sa][sb] = 1 + @min(lev(a, b, sa - 1, sb, cache_ptr, "REM"), @min(lev(a, b, sa, sb - 1, cache_ptr, "ADD"), lev(a, b, sa - 1, sb - 1, cache_ptr, "REP")));
-
-    return cache[sa][sb];
-}
-
-fn lev2(a: []const u8, b: []const u8, cache_ptr: *[][]usize) usize {
-    const cache = cache_ptr.*;
+fn lev(a: []const u8, b: []const u8, distances_cache_ptr: *[][]usize, actions_ptr: *[][]u8) usize {
+    const cache = distances_cache_ptr.*;
+    const actions = actions_ptr.*;
 
     var n1: usize = undefined;
     var n2: usize = undefined;
 
-    for (0..b.len + 1) |i| {
+    cache[0][0] = 0;
+    actions[0][0] = IGNORE;
+
+    for (1..b.len + 1) |i| {
         n2 = i;
         n1 = 0;
+        actions[n1][n2] = ADD;
         cache[n1][n2] = n2;
     }
 
-    for (0..a.len + 1) |i| {
+    for (1..a.len + 1) |i| {
         n1 = i;
         n2 = 0;
+        actions[n1][n2] = REMOVE;
         cache[i][n2] = n1;
     }
 
@@ -64,9 +37,30 @@ fn lev2(a: []const u8, b: []const u8, cache_ptr: *[][]usize) usize {
             n2 = j;
             if (a[n1 - 1] == b[n2 - 1]) {
                 cache[n1][n2] = cache[n1 - 1][n2 - 1];
+                actions[n1][n2] = IGNORE;
                 continue;
             }
-            cache[n1][n2] = 1 + @min(cache[n1 - 1][n2], @min(cache[n1][n2 - 1], cache[n1 - 1][n2 - 1]));
+
+            const rem = cache[n1 - 1][n2];
+            const add = cache[n1][n2 - 1];
+            const rep = cache[n1 - 1][n2 - 1];
+
+            cache[n1][n2] = rem;
+            actions[n1][n2] = REMOVE;
+
+            if (cache[n1][n2] > add) {
+                cache[n1][n2] = add;
+                actions[n1][n2] = ADD;
+            }
+
+            if (cache[n1][n2] > rep) {
+                cache[n1][n2] = rep;
+                actions[n1][n2] = REPLACE;
+            }
+
+            cache[n1][n2] += 1;
+
+            //cache[n1][n2] = 1 + @min(cache[n1 - 1][n2], @min(cache[n1][n2 - 1], cache[n1 - 1][n2 - 1]));
         }
     }
 
@@ -83,27 +77,34 @@ pub fn diff() void {
     const b_len = b.len + 1;
 
     var data: [a_len][b_len]usize = undefined;
+    var action_data: [a_len][b_len]u8 = undefined;
 
     for (0..a_len) |i| {
         for (0..b_len) |j| {
             data[i][j] = NOT_VALUE;
+            action_data[i][j] = '-';
         }
     }
 
-    var cache: [][]usize = undefined;
+    var distances: [][]usize = undefined;
+    var actions: [][]u8 = undefined;
     var buffer: [a_len][]usize = undefined;
+    var buffer_actions: [a_len][]u8 = undefined;
 
     for (0..a_len) |i| {
         // slicing the columns inside the array
-        const r_ptr = &data[i];
-        buffer[i] = r_ptr;
+        const buf_distances_ptr = &data[i];
+        const buf_actions_ptr = &action_data[i];
+        buffer[i] = buf_distances_ptr;
+        buffer_actions[i] = buf_actions_ptr;
     }
 
-    cache = buffer[0..];
+    distances = buffer[0..];
+    actions = buffer_actions[0..];
 
     std.debug.print("A: {s} - B: {s}\n\n", .{ a, b });
 
-    const res = lev2(a, b, &cache);
+    const res = lev(a, b, &distances, &actions);
 
     std.debug.print("RES {}\n", .{res});
 }
