@@ -1,3 +1,5 @@
 *.o
 main
 *.gtt
+.zig-cache/
+zig-out/
