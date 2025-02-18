@@ -2,10 +2,22 @@ const std = @import("std");
 
 const NOT_VALUE = 1111110;
 var NOT_VALUE_ACTION: u8 = '-';
-const IGNORE = '_';
-const ADD = '+';
-const REMOVE = '-';
-const REPLACE = 'r';
+const IGNORE = 'I';
+const ADD = 'A';
+const REMOVE = 'R';
+const REPLACE = 'S';
+
+fn print_cache(d_cache_ptr: *[][]usize, a_cache_ptr: *[][]u8, a_len: usize, b_len: usize) void {
+    const distances = d_cache_ptr.*;
+    const actions = a_cache_ptr.*;
+
+    for (0..a_len) |i| {
+        for (0..b_len) |j| {
+            std.debug.print("{d} ({c}) ", .{ distances[i][j], actions[i][j] });
+        }
+        std.debug.print("\n", .{});
+    }
+}
 
 fn lev(a: []const u8, b: []const u8, distances_cache_ptr: *[][]usize, actions_ptr: *[][]u8) usize {
     const cache = distances_cache_ptr.*;
@@ -59,8 +71,33 @@ fn lev(a: []const u8, b: []const u8, distances_cache_ptr: *[][]usize, actions_pt
             }
 
             cache[n1][n2] += 1;
+        }
+    }
 
-            //cache[n1][n2] = 1 + @min(cache[n1 - 1][n2], @min(cache[n1][n2 - 1], cache[n1 - 1][n2 - 1]));
+    n1 = a.len;
+    n2 = b.len;
+
+    //TODO: MAYBE RETURN THE DIFFING STRUCTURING OR SAVE FOR OUTSIDE PRINTING
+    while (n1 > 0 or n2 > 0) {
+        const action = actions[n1][n2];
+
+        if (action == ADD) {
+            n2 -= 1;
+            std.debug.print("{c}({c}) - ", .{ action, b[n2] });
+        } else if (action == REMOVE) {
+            n1 -= 1;
+            std.debug.print("{c}({c}) - ", .{ action, b[n2] });
+        } else if (action == REPLACE) {
+            n1 -= 1;
+            n2 -= 1;
+            std.debug.print("{c}({c}) - ", .{ action, a[n1] });
+        } else if (action == IGNORE) {
+            n1 -= 1;
+            n2 -= 1;
+            std.debug.print("{c}({c}) - ", .{ action, a[n1] });
+        } else {
+            std.debug.assert(false);
+            std.debug.print("ERROR", .{});
         }
     }
 
@@ -68,7 +105,7 @@ fn lev(a: []const u8, b: []const u8, distances_cache_ptr: *[][]usize, actions_pt
 }
 pub fn diff() void {
     const a = "add";
-    const b = "daddy";
+    const b = "daddyyyy";
 
     //const a = "adddfjksdfkdgjks";
     //const b = "addf9sdfjksdfjkljsdf";
@@ -106,5 +143,7 @@ pub fn diff() void {
 
     const res = lev(a, b, &distances, &actions);
 
-    std.debug.print("RES {}\n", .{res});
+    //print_cache(&distances, &actions, a_len, b_len);
+
+    std.debug.print("\nRES {}\n", .{res});
 }
