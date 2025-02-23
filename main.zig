@@ -41,20 +41,40 @@ fn save(filename: []u8) !void {
     try file.write(hash, file_data);
 }
 
+fn diff_files(path_1: []u8, path_2: []u8) !void {
+    const file_1_data = try file.read(path_1);
+    const file_2_data = try file.read(path_2);
+    //std.debug.print("{s}", .{file_1_data});
+    //std.debug.print("{s}", .{file_2_data});
+    try diff.diff(file_1_data, file_2_data);
+}
+
 pub fn main() !void {
-    diff.diff();
-    //var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    //defer arena.deinit();
+    //const a = "add\nadd";
+    //const b = "add\nzaddy";
+    //const a = "adddfjksdfkdgjks";
+    //const b = "addf9sdfjksdfjkljsdf";
 
-    //const allocator = arena.allocator();
+    //try diff.diff(a, b);
 
-    //const args = try std.process.argsAlloc(allocator);
-    //defer std.process.argsFree(allocator, args);
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
+
+    const allocator = arena.allocator();
+
+    const args = try std.process.argsAlloc(allocator);
+    defer std.process.argsFree(allocator, args);
+
+    const p1 = args[1];
+    const p2 = args[2];
+
+    try diff_files(p1, p2);
 
     //for (args, 0..) |arg, i| {
     //if (std.mem.eql(u8, arg, "-s")) {
     //const filename = args[i + 1];
-    //try save(filename);
+    //const file_data = try file.read(filename);
+    //try diff.diff(file_data, file_b: []const u8)
     //}
     //std.debug.print("Argument {}: {s}\n", .{ i, arg });
     //}
