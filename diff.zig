@@ -3,7 +3,7 @@ const std = @import("std");
 const NOT_VALUE = 1111110;
 var NOT_VALUE_ACTION: u8 = '_';
 
-const IGNORE = ' ';
+const IGNORE = '=';
 const ADD = '+';
 const REMOVE = '-';
 
@@ -22,11 +22,11 @@ fn print_cache(d_cache_ptr: *[][]usize, a_cache_ptr: *[][]u8, a_len: usize, b_le
 }
 
 fn print_diff(result: []Operation) void {
-    for (result) |res| {
-        if (res.action != 'x') {
-            std.debug.print("\n{c} {s}", .{ res.action, res.value });
+    for (0..result.len - 1) |i| {
+        if (result[i].action != 'x') {
+            std.debug.print("\n{c} {s}", .{ result[i].action, result[i].value });
         } else {
-            std.debug.print("\n  {s}", .{res.value});
+            std.debug.print("\n  {s}", .{result[i].value});
         }
     }
 }
